@@ -1,6 +1,10 @@
 #include <catch2/catch_all.hpp>
 
+#include <cstdlib>
+#include <string>
+
 #include "slic3r/Utils/bambu_networking.hpp"
+#include "slic3r/Utils/PJarczakLinuxBridge/PJarczakLinuxBridgeConfig.hpp"
 
 using namespace Slic3r;
 
@@ -96,3 +100,45 @@ TEST_CASE("NetworkLibraryVersionInfo::from_discovered", "[BambuNetworking]") {
         REQUIRE(info.is_discovered == true);
     }
 }
+
+#if defined(__APPLE__) || defined(__WXMAC__)
+TEST_CASE("macOS uses native network plugin by default", "[BambuNetworking][PJarczakLinuxBridge]") {
+    struct EnvGuard {
+        const char* previous = std::getenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
+        std::string previous_value = previous ? previous : "";
+        ~EnvGuard()
+        {
+            if (previous)
+                setenv("PJARCZAK_LINUX_BRIDGE_ENABLED", previous_value.c_str(), 1);
+            else
+                unsetenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
+        }
+    } env_guard;
+
+    unsetenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
+    REQUIRE_FALSE(PJarczakLinuxBridge::enabled());
+    REQUIRE_FALSE(PJarczakLinuxBridge::use_bridge_network_module());
+    REQUIRE_FALSE(PJarczakLinuxBridge::source_module_is_network_module());
+    REQUIRE_FALSE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
+}
+
+TEST_CASE("macOS Linux bridge remains opt-in", "[BambuNetworking][PJarczakLinuxBridge]") {
+    struct EnvGuard {
+        const char* previous = std::getenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
+        std::string previous_value = previous ? previous : "";
+        ~EnvGuard()
+        {
+            if (previous)
+                setenv("PJARCZAK_LINUX_BRIDGE_ENABLED", previous_value.c_str(), 1);
+            else
+                unsetenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
+        }
+    } env_guard;
+
+    setenv("PJARCZAK_LINUX_BRIDGE_ENABLED", "1", 1);
+    REQUIRE(PJarczakLinuxBridge::enabled());
+    REQUIRE(PJarczakLinuxBridge::use_bridge_network_module());
+    REQUIRE(PJarczakLinuxBridge::source_module_is_network_module());
+    REQUIRE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
+}
+#endif
