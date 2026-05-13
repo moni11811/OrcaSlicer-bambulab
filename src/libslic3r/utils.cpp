@@ -1618,6 +1618,8 @@ void copy_directory_recursively(const boost::filesystem::path &source, const boo
         else {
 			if(filter && filter(name))
 				continue;
+            if (boost::filesystem::exists(target_file) || boost::filesystem::is_symlink(target_file))
+                boost::filesystem::remove_all(target_file);
             CopyFileResult cfr = copy_file(source_file, target_file, error_message, false);
             if (cfr != CopyFileResult::SUCCESS) {
                 BOOST_LOG_TRIVIAL(error) << "Copying failed(" << cfr << "): " << error_message;

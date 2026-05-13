@@ -306,6 +306,16 @@ int BBLNetworkPlugin::initialize(bool using_backup, const std::string& version)
         return -1;
     }
 
+    if (!pj_bridge && !loaded_version.empty() && extract_base_version(loaded_version) != extract_base_version(version)) {
+        set_load_error(
+            "Network library version mismatch",
+            "Loaded network library version " + loaded_version + " but configured version " + version,
+            library
+        );
+        unload();
+        return -1;
+    }
+
     return 0;
 }
 

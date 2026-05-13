@@ -7,7 +7,11 @@
 #include <vector>
 
 #ifndef BAMBU_NETWORK_AGENT_VERSION
+#if defined(__WXMAC__) || defined(__APPLE__)
+#define BAMBU_NETWORK_AGENT_VERSION "02.03.00.62"
+#else
 #define BAMBU_NETWORK_AGENT_VERSION "02.05.02.58"
+#endif
 #endif
 
 #ifndef BAMBU_NETWORK_AGENT_VERSION_LEGACY

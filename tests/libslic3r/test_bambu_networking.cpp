@@ -104,7 +104,24 @@ TEST_CASE("NetworkLibraryVersionInfo::from_discovered", "[BambuNetworking]") {
 }
 
 #if defined(__APPLE__) || defined(__WXMAC__)
-TEST_CASE("macOS Linux bridge stays enabled by default", "[BambuNetworking][PJarczakLinuxBridge]") {
+TEST_CASE("copy_directory_recursively replaces stale framework symlink targets", "[BambuNetworking][macOS]") {
+    const std::string utils_path = std::string(ORCASLICER_SOURCE_DIR) + "/src/libslic3r/utils.cpp";
+    std::ifstream utils(utils_path);
+    REQUIRE(utils.good());
+
+    const std::string source((std::istreambuf_iterator<char>(utils)), std::istreambuf_iterator<char>());
+    const auto copy_file_pos = source.find("copy_file(source_file, target_file");
+    REQUIRE(copy_file_pos != std::string::npos);
+
+    const auto remove_pos = source.rfind("boost::filesystem::remove_all(target_file)", copy_file_pos);
+    REQUIRE(remove_pos != std::string::npos);
+}
+
+TEST_CASE("macOS native Bambu networking uses compatible native plugin", "[BambuNetworking][macOS]") {
+    REQUIRE(std::string(get_latest_network_version()) == "02.03.00.62");
+}
+
+TEST_CASE("macOS Linux bridge is opt-in", "[BambuNetworking][PJarczakLinuxBridge]") {
     struct EnvGuard {
         const char* previous = std::getenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
         std::string previous_value = previous ? previous : "";
@@ -118,10 +135,10 @@ TEST_CASE("macOS Linux bridge stays enabled by default", "[BambuNetworking][PJar
     } env_guard;
 
     unsetenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
-    REQUIRE(PJarczakLinuxBridge::enabled());
-    REQUIRE(PJarczakLinuxBridge::use_bridge_network_module());
-    REQUIRE(PJarczakLinuxBridge::source_module_is_network_module());
-    REQUIRE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
+    REQUIRE_FALSE(PJarczakLinuxBridge::enabled());
+    REQUIRE_FALSE(PJarczakLinuxBridge::use_bridge_network_module());
+    REQUIRE_FALSE(PJarczakLinuxBridge::source_module_is_network_module());
+    REQUIRE_FALSE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
 
     setenv("PJARCZAK_LINUX_BRIDGE_ENABLED", "0", 1);
     REQUIRE_FALSE(PJarczakLinuxBridge::enabled());
@@ -150,26 +167,23 @@ TEST_CASE("macOS Linux bridge can be forced on", "[BambuNetworking][PJarczakLinu
     REQUIRE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
 }
 
-TEST_CASE("macOS Linux bridge installer mounts runtime payload into Lima", "[BambuNetworking][macOS][PJarczakLinuxBridge]") {
-    const std::string install_script_path =
-        std::string(ORCASLICER_SOURCE_DIR) + "/tools/pjarczak_bambu_runtime/macos/pjarczak_install_macos_runtime.sh";
-    std::ifstream install_script(install_script_path);
-    REQUIRE(install_script.good());
+TEST_CASE("Native network plugin rejects stale fallback version", "[BambuNetworking][macOS]") {
+    const std::string plugin_path = std::string(ORCASLICER_SOURCE_DIR) + "/src/slic3r/Utils/BBLNetworkPlugin.cpp";
+    std::ifstream plugin(plugin_path);
+    REQUIRE(plugin.good());
 
-    const std::string source((std::istreambuf_iterator<char>(install_script)), std::istreambuf_iterator<char>());
-    REQUIRE(source.find("--mount-only") != std::string::npos);
-    REQUIRE(source.find("$APP_SUPPORT_DIR:w") != std::string::npos);
-}
+    const std::string source((std::istreambuf_iterator<char>(plugin)), std::istreambuf_iterator<char>());
+    const auto fallback_pos = source.find("versioned plugin missing, trying fallback");
+    REQUIRE(fallback_pos != std::string::npos);
 
-TEST_CASE("macOS Linux bridge verifier checks payload inside Lima guest", "[BambuNetworking][macOS][PJarczakLinuxBridge]") {
-    const std::string verify_script_path =
-        std::string(ORCASLICER_SOURCE_DIR) + "/tools/pjarczak_bambu_runtime/macos/pjarczak_verify_macos_runtime.sh";
-    std::ifstream verify_script(verify_script_path);
-    REQUIRE(verify_script.good());
+    const auto mismatch_pos = source.find("extract_base_version(loaded_version) != extract_base_version(version)");
+    REQUIRE(mismatch_pos != std::string::npos);
 
-    const std::string source((std::istreambuf_iterator<char>(verify_script)), std::istreambuf_iterator<char>());
-    REQUIRE(source.find("check_lima_payload_mount") != std::string::npos);
-    REQUIRE(source.find("cannot access runtime payload") != std::string::npos);
+    const auto unload_pos = source.find("unload();", mismatch_pos);
+    const auto return_pos = source.find("return -1;", mismatch_pos);
+    REQUIRE(unload_pos != std::string::npos);
+    REQUIRE(return_pos != std::string::npos);
+    REQUIRE(unload_pos < return_pos);
 }
 
 TEST_CASE("macOS app exit shuts down Bambu networking before wx exit", "[BambuNetworking][macOS][shutdown]") {
