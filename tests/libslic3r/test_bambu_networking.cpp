@@ -1,6 +1,8 @@
 #include <catch2/catch_all.hpp>
 
 #include <cstdlib>
+#include <fstream>
+#include <iterator>
 #include <string>
 
 #include "slic3r/Utils/bambu_networking.hpp"
@@ -140,5 +142,29 @@ TEST_CASE("macOS Linux bridge remains opt-in", "[BambuNetworking][PJarczakLinuxB
     REQUIRE(PJarczakLinuxBridge::use_bridge_network_module());
     REQUIRE(PJarczakLinuxBridge::source_module_is_network_module());
     REQUIRE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
+}
+
+TEST_CASE("macOS app exit shuts down native Bambu networking before wx exit", "[BambuNetworking][macOS][shutdown]") {
+    const std::string gui_app_path = std::string(ORCASLICER_SOURCE_DIR) + "/src/slic3r/GUI/GUI_App.cpp";
+    std::ifstream gui_app(gui_app_path);
+    REQUIRE(gui_app.good());
+
+    const std::string source((std::istreambuf_iterator<char>(gui_app)), std::istreambuf_iterator<char>());
+    const auto on_exit_pos = source.find("int GUI_App::OnExit()");
+    REQUIRE(on_exit_pos != std::string::npos);
+
+    const auto next_function_pos = source.find("\nclass wxBoostLog", on_exit_pos);
+    REQUIRE(next_function_pos != std::string::npos);
+
+    const auto on_exit_body = source.substr(on_exit_pos, next_function_pos - on_exit_pos);
+    const auto delete_agent_pos = on_exit_body.find("delete m_agent;");
+    const auto shutdown_pos = on_exit_body.find("BBLNetworkPlugin::shutdown();");
+    const auto wx_exit_pos = on_exit_body.find("return wxApp::OnExit();");
+
+    REQUIRE(delete_agent_pos != std::string::npos);
+    REQUIRE(shutdown_pos != std::string::npos);
+    REQUIRE(wx_exit_pos != std::string::npos);
+    REQUIRE(delete_agent_pos < shutdown_pos);
+    REQUIRE(shutdown_pos < wx_exit_pos);
 }
 #endif

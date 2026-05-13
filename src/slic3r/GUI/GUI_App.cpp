@@ -2534,6 +2534,7 @@ int GUI_App::OnExit()
         delete m_agent;
         m_agent = nullptr;
     }
+    BBLNetworkPlugin::shutdown();
 
     // Orca: clean up encrypted bbl network log file if plugin is used
     // No point to keep them as they are encrypted and can't be used for debugging

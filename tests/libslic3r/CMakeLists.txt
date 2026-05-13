@@ -32,6 +32,7 @@ endif()
 
 target_link_libraries(${_TEST_NAME}_tests test_common libslic3r Catch2::Catch2WithMain)
 target_include_directories(${_TEST_NAME}_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(${_TEST_NAME}_tests PRIVATE ORCASLICER_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 if (APPLE)
     target_sources(${_TEST_NAME}_tests PRIVATE
         ${CMAKE_SOURCE_DIR}/src/slic3r/Utils/PJarczakLinuxBridge/PJarczakLinuxBridgeConfig.cpp
