@@ -69,9 +69,9 @@ private:
 
 private:
     static inline const wxMediaState MEDIASTATE_IDLE = static_cast<wxMediaState>(3);
-    static inline wxMediaState MEDIASTATE_INITIALIZING = static_cast<wxMediaState>(4);
-    static inline wxMediaState MEDIASTATE_LOADING = static_cast<wxMediaState>(5);
-    static inline wxMediaState MEDIASTATE_BUFFERING = static_cast<wxMediaState>(6);
+    static inline const wxMediaState MEDIASTATE_INITIALIZING = static_cast<wxMediaState>(4);
+    static inline const wxMediaState MEDIASTATE_LOADING = static_cast<wxMediaState>(5);
+    static inline const wxMediaState MEDIASTATE_BUFFERING = static_cast<wxMediaState>(6);
 
     // token
     std::shared_ptr<int> m_token = std::make_shared<int>(0);
