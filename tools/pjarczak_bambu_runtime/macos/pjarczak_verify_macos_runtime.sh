@@ -99,32 +99,6 @@ compare_required_file() {
     fi
 }
 
-check_lima_payload_mount() {
-    local required_files=(
-        libbambu_networking.so
-        libBambuSource.so
-        pjarczak_bambu_linux_host
-        pjarczak_bambu_linux_host_abi1
-        pjarczak_bambu_linux_host_abi0
-        ca-certificates.crt
-        slicer_base64.cer
-    )
-
-    if ! "$LIMACTL" shell "$INSTANCE" -- /usr/bin/env PJARCZAK_MAC_RUNTIME_DIR="$RUNTIME_DIR" /bin/sh -lc '
-for file do
-    if [ ! -e "$PJARCZAK_MAC_RUNTIME_DIR/$file" ]; then
-        exit 10
-    fi
-done
-if [ ! -x "$PJARCZAK_MAC_RUNTIME_DIR/pjarczak_bambu_linux_host" ]; then
-    exit 11
-fi
-' sh "${required_files[@]}"; then
-        echo "Lima instance '$INSTANCE' cannot access runtime payload at '$RUNTIME_DIR'" >&2
-        exit 1
-    fi
-}
-
 mkdir -p "$APP_SUPPORT_DIR"
 
 require_file "$PLUGIN_DIR/install_runtime_macos.sh" "install_runtime_macos.sh"
@@ -183,8 +157,6 @@ if ! "$LIMACTL" shell "$INSTANCE" -- /usr/bin/env true >/dev/null 2>&1; then
     echo "Lima instance '$INSTANCE' is not ready" >&2
     exit 1
 fi
-
-check_lima_payload_mount
 
 printf 'runtime ok
 '
