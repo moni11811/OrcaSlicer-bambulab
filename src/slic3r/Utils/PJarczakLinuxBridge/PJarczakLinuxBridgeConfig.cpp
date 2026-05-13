@@ -117,7 +117,7 @@ bool enabled()
 #if defined(_MSC_VER) || defined(_WIN32)
     return true;
 #elif defined(__WXMAC__) || defined(__APPLE__)
-    return false;
+    return true;
 #else
     return false;
 #endif

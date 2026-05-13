@@ -133,15 +133,6 @@ copy_linux_bridge_runtime_to_app() {
     local macos_dir="$app_path/Contents/MacOS"
     local bridge_dylib="$install_root/libpjarczak_bambu_networking_bridge.dylib"
 
-    case "${PJARCZAK_LINUX_BRIDGE_ENABLED:-}" in
-        1|true|TRUE|yes|YES|on|ON)
-            ;;
-        *)
-            echo "Skipping macOS Linux bridge runtime packaging (PJARCZAK_LINUX_BRIDGE_ENABLED is not enabled)"
-            return 0
-            ;;
-    esac
-
     if [ ! -f "$HOST_RUNTIME_DIR/pjarczak_bambu_linux_host" ]; then
         echo "Missing linux host runtime: $HOST_RUNTIME_DIR/pjarczak_bambu_linux_host"
         echo "Build it first on Linux with:"
