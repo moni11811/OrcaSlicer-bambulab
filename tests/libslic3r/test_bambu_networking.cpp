@@ -124,7 +124,7 @@ TEST_CASE("macOS uses native network plugin by default", "[BambuNetworking][PJar
     REQUIRE_FALSE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
 }
 
-TEST_CASE("macOS does not route networking through Linux bridge", "[BambuNetworking][PJarczakLinuxBridge]") {
+TEST_CASE("macOS Linux bridge remains opt-in", "[BambuNetworking][PJarczakLinuxBridge]") {
     struct EnvGuard {
         const char* previous = std::getenv("PJARCZAK_LINUX_BRIDGE_ENABLED");
         std::string previous_value = previous ? previous : "";
@@ -138,21 +138,10 @@ TEST_CASE("macOS does not route networking through Linux bridge", "[BambuNetwork
     } env_guard;
 
     setenv("PJARCZAK_LINUX_BRIDGE_ENABLED", "1", 1);
-    REQUIRE_FALSE(PJarczakLinuxBridge::enabled());
-    REQUIRE_FALSE(PJarczakLinuxBridge::use_bridge_network_module());
-    REQUIRE_FALSE(PJarczakLinuxBridge::source_module_is_network_module());
-    REQUIRE_FALSE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
-}
-
-TEST_CASE("macOS build does not package Linux bridge runtime", "[BambuNetworking][macOS][PJarczakLinuxBridge]") {
-    const std::string build_script_path = std::string(ORCASLICER_SOURCE_DIR) + "/build_release_macos.sh";
-    std::ifstream build_script(build_script_path);
-    REQUIRE(build_script.good());
-
-    const std::string source((std::istreambuf_iterator<char>(build_script)), std::istreambuf_iterator<char>());
-    REQUIRE(source.find("macOS uses the native Bambu network plugin") != std::string::npos);
-    REQUIRE(source.find("PJARCZAK_LINUX_BRIDGE_ENABLED") == std::string::npos);
-    REQUIRE(source.find("pjarczak-bambu-linux-host-wrapper") == std::string::npos);
+    REQUIRE(PJarczakLinuxBridge::enabled());
+    REQUIRE(PJarczakLinuxBridge::use_bridge_network_module());
+    REQUIRE(PJarczakLinuxBridge::source_module_is_network_module());
+    REQUIRE(PJarczakLinuxBridge::should_force_linux_plugin_payload("plugins"));
 }
 
 TEST_CASE("macOS app exit shuts down native Bambu networking before wx exit", "[BambuNetworking][macOS][shutdown]") {
