@@ -110,16 +110,18 @@ const nlohmann::json* find_manifest_entry(const nlohmann::json& root, const std:
 
 bool enabled()
 {
+#if defined(__WXMAC__) || defined(__APPLE__)
+    return false;
+#else
     bool forced = false;
     if (env_flag("PJARCZAK_LINUX_BRIDGE_ENABLED", forced))
         return forced;
 
 #if defined(_MSC_VER) || defined(_WIN32)
     return true;
-#elif defined(__WXMAC__) || defined(__APPLE__)
-    return false;
 #else
     return false;
+#endif
 #endif
 }
 

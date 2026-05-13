@@ -121,83 +121,11 @@ echo
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_BUILD_DIR="$PROJECT_DIR/build/$ARCH"
 DEPS_DIR="$PROJECT_DIR/deps"
-HOST_RUNTIME_DIR="$PROJECT_DIR/tools/pjarczak_bambu_linux_host/runtime/linux-x86_64"
-HOST_WRAPPER="$PROJECT_DIR/tools/pjarczak_bambu_linux_host/pjarczak-bambu-linux-host-wrapper"
-MAC_RUNTIME_HELPERS_DIR="$PROJECT_DIR/tools/pjarczak_bambu_runtime/macos"
 
 export BUILD_DIR_CONFIG_SUBDIR="/$BUILD_CONFIG"
 
 copy_linux_bridge_runtime_to_app() {
-    local app_path="$1"
-    local install_root="$2"
-    local macos_dir="$app_path/Contents/MacOS"
-    local bridge_dylib="$install_root/libpjarczak_bambu_networking_bridge.dylib"
-
-    case "${PJARCZAK_LINUX_BRIDGE_ENABLED:-}" in
-        1|true|TRUE|yes|YES|on|ON)
-            ;;
-        *)
-            echo "Skipping macOS Linux bridge runtime packaging (PJARCZAK_LINUX_BRIDGE_ENABLED is not enabled)"
-            return 0
-            ;;
-    esac
-
-    if [ ! -f "$HOST_RUNTIME_DIR/pjarczak_bambu_linux_host" ]; then
-        echo "Missing linux host runtime: $HOST_RUNTIME_DIR/pjarczak_bambu_linux_host"
-        echo "Build it first on Linux with:"
-        echo "  tools/pjarczak_bambu_linux_host/package_linux_host_runtime.sh"
-        exit 1
-    fi
-
-    if [ ! -f "$HOST_RUNTIME_DIR/pjarczak_bambu_linux_host_abi1" ]; then
-        echo "Missing linux host ABI1 runtime: $HOST_RUNTIME_DIR/pjarczak_bambu_linux_host_abi1"
-        exit 1
-    fi
-
-    if [ ! -f "$HOST_RUNTIME_DIR/pjarczak_bambu_linux_host_abi0" ]; then
-        echo "Missing linux host ABI0 runtime: $HOST_RUNTIME_DIR/pjarczak_bambu_linux_host_abi0"
-        exit 1
-    fi
-
-    if [ ! -f "$HOST_WRAPPER" ]; then
-        echo "Missing mac wrapper: $HOST_WRAPPER"
-        exit 1
-    fi
-
-    if [ ! -f "$MAC_RUNTIME_HELPERS_DIR/pjarczak_install_macos_runtime.sh" ]; then
-        echo "Missing mac runtime installer: $MAC_RUNTIME_HELPERS_DIR/pjarczak_install_macos_runtime.sh"
-        exit 1
-    fi
-
-    if [ ! -f "$MAC_RUNTIME_HELPERS_DIR/pjarczak_verify_macos_runtime.sh" ]; then
-        echo "Missing mac runtime verifier: $MAC_RUNTIME_HELPERS_DIR/pjarczak_verify_macos_runtime.sh"
-        exit 1
-    fi
-
-    if [ ! -f "$MAC_RUNTIME_HELPERS_DIR/pjarczak_lima_instance.txt" ]; then
-        echo "Missing Lima instance file: $MAC_RUNTIME_HELPERS_DIR/pjarczak_lima_instance.txt"
-        exit 1
-    fi
-
-    if [ ! -f "$bridge_dylib" ]; then
-        echo "Missing installed bridge dylib: $bridge_dylib"
-        exit 1
-    fi
-
-    cp -f "$bridge_dylib" "$macos_dir/"
-    find "$HOST_RUNTIME_DIR" -maxdepth 1 -type f -exec cp -f {} "$macos_dir/" \;
-    cp -f "$HOST_WRAPPER" "$macos_dir/"
-    cp -f "$MAC_RUNTIME_HELPERS_DIR/pjarczak_install_macos_runtime.sh" "$macos_dir/install_runtime_macos.sh"
-    cp -f "$MAC_RUNTIME_HELPERS_DIR/pjarczak_verify_macos_runtime.sh" "$macos_dir/verify_runtime_macos.sh"
-    cp -f "$MAC_RUNTIME_HELPERS_DIR/pjarczak_lima_instance.txt" "$macos_dir/"
-    if [ -f "$MAC_RUNTIME_HELPERS_DIR/README_runtime_bridge.txt" ]; then
-        cp -f "$MAC_RUNTIME_HELPERS_DIR/README_runtime_bridge.txt" "$macos_dir/"
-    fi
-
-    chmod +x "$macos_dir/pjarczak_bambu_linux_host"
-    chmod +x "$macos_dir/pjarczak-bambu-linux-host-wrapper"
-    chmod +x "$macos_dir/install_runtime_macos.sh"
-    chmod +x "$macos_dir/verify_runtime_macos.sh"
+    echo "macOS uses the native Bambu network plugin; Linux bridge runtime is not packaged."
 }
 
 build_deps() {
