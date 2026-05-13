@@ -222,7 +222,7 @@ copy_runtime_payload "$PLUGIN_DIR" "$RUNTIME_DIR"
 ensure_lima_installed
 maybe_install_rosetta
 
-START_ARGS=(start "--name=${INSTANCE}" --tty=false --mount-writable)
+START_ARGS=(start "--name=${INSTANCE}" --tty=false --mount-only "$APP_SUPPORT_DIR:w")
 MACOS_MAJOR=$(sw_vers -productVersion | awk -F. '{print $1}')
 if [[ "$MACOS_MAJOR" -ge 13 ]]; then
     START_ARGS+=(--vm-type=vz --network=vzNAT)
